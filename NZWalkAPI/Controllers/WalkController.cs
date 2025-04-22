@@ -21,10 +21,17 @@ namespace NZWalkAPI.Controllers
         }
         //GetALl Walks
         [HttpGet]
-        public async Task<IActionResult> GetAllWalks()
+        public async Task<IActionResult> GetAllWalks(
+            [FromQuery] string? filterOn,
+            [FromQuery] string? filterQuery,
+            [FromQuery] string? sortBy,
+            [FromQuery] bool isAscending = true,
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 10)
         {
             // get walks from the database
-            var walksDomain = await walkRepository.GetAllAsync();
+            var walksDomain = await walkRepository.GetAllAsync(
+                filterOn, filterQuery,sortBy,isAscending,pageNumber,pageSize);
             // Convert to DTO using AutoMapper
             var walksDto = mapper.Map<List<WalkDto>>(walksDomain);
             //return Dto
