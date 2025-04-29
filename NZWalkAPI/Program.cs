@@ -1,4 +1,6 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using NZWalkAPI.CustomActionFilter;
 using NZWalkAPI.Data;
 using NZWalkAPI.Mappings;
@@ -13,13 +15,30 @@ builder.Services.AddScoped<IWalkRepository, SQLWalkRepository>();
 
 // regis the automaper
 builder.Services.AddAutoMapper(typeof(AutoMapperProfiles));
+
 // Add services to the container.
 builder.Services.AddDbContext<NZWalksDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("NZWalksConnectionString")));
+
+builder.Services.AddDbContext<NZWalksAuthDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("NZWalksAuthConnectionString")));
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(option =>
+    option.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+        ValidAudience = builder.Configuration["Jwt:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+    });
 
 builder.Services.AddControllers();
 
-// Add custom action filter
+// Add custom action filter 
 builder.Services.AddControllers(option =>
 {
     option.Filters.Add<ValidateModeAtribute>();
