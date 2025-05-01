@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using NZWalkAPI.CustomActionFilter;
@@ -15,6 +17,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddScoped<IRegionRepository, SQLRegionRepository>();
 builder.Services.AddScoped<IWalkRepository, SQLWalkRepository>();
 builder.Services.AddScoped<ITokenRepository, TokenRepository>();
+builder.Services.AddScoped<IImageRepository, LocalImageRepository>();
 
 // regis the automaper
 builder.Services.AddAutoMapper(typeof(AutoMapperProfiles));
@@ -69,6 +72,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 builder.Services.AddControllers();
+builder.Services.AddHttpContextAccessor();
 
 // Add custom action filter 
 builder.Services.AddControllers(option =>
@@ -121,8 +125,14 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
 app.UseAuthorization();
+
+app.UseStaticFiles(
+    new StaticFileOptions
+    {
+        FileProvider = new PhysicalFileProvider (Path.Combine(Directory.GetCurrentDirectory(),"Images")),
+        RequestPath  = "/Images"
+    });
 
 app.MapControllers();
 
