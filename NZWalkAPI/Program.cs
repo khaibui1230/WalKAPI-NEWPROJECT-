@@ -9,6 +9,7 @@ using NZWalkAPI.CustomActionFilter;
 using NZWalkAPI.Data;
 using NZWalkAPI.Mappings;
 using NZWalkAPI.Reposotiory;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -114,6 +115,14 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
+//Add Serilog
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.Console()
+    .WriteTo.File("Logs/log-.txt", rollingInterval: RollingInterval.Day) // one log for one day
+    .Enrich.FromLogContext()
+    .CreateLogger();
+
+builder.Host.UseSerilog(); // add serilog to host
 
 var app = builder.Build();
 

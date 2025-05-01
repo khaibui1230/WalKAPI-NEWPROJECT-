@@ -13,17 +13,21 @@ namespace NZWalkAPI.Controllers
     {
         private readonly IMapper mapper;
         private readonly IImageRepository imageRepository;
+        private readonly ILogger<ImageController> logger;
 
-        public ImageController(IMapper mapper, IImageRepository imageRepository)
+        public ImageController(IMapper mapper, IImageRepository imageRepository, ILogger<ImageController> logger)
         {
             this.mapper = mapper;
             this.imageRepository = imageRepository;
+            this.logger = logger;
         }
         //POST : /api/Image/Upload
         [HttpPost]
         [Route("Upload")]
-        public async Task<IActionResult> Upload([FromForm] ImageUploadRequestDto requestDto) { 
+        public async Task<IActionResult> Upload([FromForm] ImageUploadRequestDto requestDto)
+        {
 
+            logger.LogInformation("Start file upload for {FileName}", requestDto.FileName);
             ValidateFileUpload(requestDto);
 
             if (ModelState.IsValid)
@@ -35,12 +39,20 @@ namespace NZWalkAPI.Controllers
                     File = requestDto.File,
                     FileName = requestDto.FileName,
                     FileDescription = requestDto.FileDescription,
-                    FileExtension = Path.GetExtension(requestDto.File.FileName) 
+                    FileExtension = Path.GetExtension(requestDto.File.FileName)
                 };
-                //User Repositoru to upload image
-                await imageRepository.Upload(imageDomainModel);
-
-                return Ok(imageDomainModel);
+                try
+                {
+                    //User Repositoru to upload image
+                    await imageRepository.Upload(imageDomainModel);
+                    logger.LogInformation("Upload successful for {FileName}", requestDto.FileName);
+                    return Ok(imageDomainModel);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Exception during upload for {FileName}", requestDto.FileName);
+                    throw; // Global exception middleware will be excute
+                }
             }
             return BadRequest(ModelState);
         }
